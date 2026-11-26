@@ -51,8 +51,8 @@ function App(){
     {error&&<p role="alert">{error}</p>}{notice&&<p role="status">{notice}</p>}
     {adding&&<form onSubmit={submit}><h2>New entry</h2><div className="fields">
       <label>Date<input name="posted" type="date" required defaultValue={new Date().toLocaleDateString('en-CA')}/></label>
-      <label>Account<select name="account">{options.accounts.map(a=><option key={a.id} value={a.id}>{a.name}</option>)}</select></label>
-      <label>Category<select name="category">{options.categories.map(c=><option key={c.id} value={c.id}>{c.name} · {c.kind}</option>)}</select></label>
+      <label>Account<select aria-label="Account" name="account">{options.accounts.map(a=><option key={a.id} value={a.id}>{a.name}</option>)}</select></label>
+      <label>Category<select aria-label="Category" name="category">{options.categories.map(c=><option key={c.id} value={c.id}>{c.name} · {c.kind}</option>)}</select></label>
       <label>Amount (₹)<input name="amount" inputMode="decimal" required placeholder="0.00"/></label>
       <label>Description<input name="note" required maxLength="120"/></label></div><button disabled={busy}>{busy?'Saving…':'Save entry'}</button></form>}
     {!data&&!error&&<p>Loading ledger…</p>}
@@ -62,7 +62,7 @@ function App(){
       {months.map(m=><div key={m.month} className="month"><span>{m.month}</span><div className="bars">
       <div className="in" style={{width:(100*m.income/max)+'%'}}/><div className="out" style={{width:(100*m.expense/max)+'%'}}/></div>
       <small>{money(m.income)} in · {money(m.expense)} out</small></div>)}{months.length===0&&<p>Add an entry to see monthly cash flow.</p>}</section>
-      <section className="table"><div className="tablehead"><h2>Reports</h2><label>View <select value={report} onChange={e=>setReport(e.target.value)}>{Object.entries(names).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></label></div>
+      <section className="table"><div className="tablehead"><h2>Reports</h2><label>View <select aria-label="View" value={report} onChange={e=>setReport(e.target.value)}>{Object.entries(names).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></label></div>
       {rows.length?<div className="scroll"><table><thead><tr>{Object.keys(rows[0]).map(k=><th key={k}>{k.replaceAll('_',' ')}</th>)}</tr></thead>
       <tbody>{rows.map((row,i)=><tr key={i}>{Object.entries(row).map(([k,v])=><td key={k}>{v==null?'—':monetary.has(k)?money(v):String(v)}</td>)}</tr>)}</tbody></table></div>:<p>No entries in this report.</p>}</section></>}
   </main>
