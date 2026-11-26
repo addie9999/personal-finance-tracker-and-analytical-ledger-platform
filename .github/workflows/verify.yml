@@ -1,0 +1,41 @@
+name: Ledger API and dashboard
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: ledger
+          POSTGRES_PASSWORD: ci_demo
+          POSTGRES_DB: ledger_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 3s --health-timeout 3s --health-retries 20
+    env:
+      TEST_DATABASE_URL: postgresql+psycopg://ledger:ci_demo@localhost:5432/ledger_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: python -m pip install -r requirements.txt playwright
+      - run: python -m pytest -q
+      - run: npm install --no-audit --no-fund && npm run build
+        working-directory: frontend
+      - run: python -m playwright install --with-deps chromium
+      - name: Check the dashboard against a seeded PostgreSQL ledger
+        run: |
+          export DATABASE_URL="$TEST_DATABASE_URL"
+          PGPASSWORD=ci_demo psql -h localhost -U ledger -d ledger_test -v ON_ERROR_STOP=1 -c 'TRUNCATE entries'
+          python seed.py
+          uvicorn ledger:app --port 8000 &
+          for n in {1..25}; do curl -fsS http://localhost:8000/api/options && break || sleep 1; done
+          python tests/browser_check.py
